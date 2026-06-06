@@ -1,0 +1,24 @@
+includes:
+    - phpstan-extension.neon
+
+parameters:
+    level: 7
+    bootstrapFiles:
+        - phpstan-bootstrap.php
+    paths:
+        - src
+        - helpers.php
+    tmpDir: tests/.phpstan.cache
+    ignoreErrors:
+        -
+            message: '#function random_bytes expects int<1, max>#'
+            path: src/Random.php
+            count: 4
+        -
+            identifier: return.type
+            path: src/Json.php
+        # list() exposes int $sorting_order; scandir() stubs narrow constants to 0|1|2.
+        -
+            identifier: argument.type
+            message: '~function scandir expects 0\|1\|2, int given~'
+            path: src/Filesystem.php

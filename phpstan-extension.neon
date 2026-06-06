@@ -1,0 +1,93 @@
+parameters:
+    # Only rules safe for every consumer of switon/core. Package-specific rules belong in that package's phpstan-package.neon.
+    reportUnmatchedIgnoredErrors: false
+    ignoreErrors:
+        # Static factories (of/by/raise) use late static binding by design.
+        -
+            identifier: new.static
+        # Array method callables: runtime-valid; callee PHPDoc uses callable(): mixed.
+        -
+            identifier: argument.type
+            message: '~expects callable\(\): mixed, array~'
+        # CLI commands: json_encode() may return false before ConsoleInterface::writeLn().
+        -
+            identifier: argument.type
+            message: '~ConsoleInterface::(writeLn|write)\(\) expects string\|Stringable, string\|false given~'
+        # PhpStorm/IDE attributes referenced from PHPDoc only.
+        -
+            identifier: attribute.notFound
+        # #[Autowired(instances: true)] maps class-string defaults resolved at runtime.
+        -
+            identifier: property.defaultValue
+        # Maker::make() with dynamic class names from config/DI.
+        -
+            identifier: argument.templateType
+        -
+            identifier: argument.type
+            message: '~MakerInterface::make\(\) expects class-string<object>, string given~'
+        # Dynamic/__call/proxy targets and parse_url()=false offset access: framework noise, not runtime bugs.
+        -
+            identifier: method.notFound
+        -
+            identifier: offsetAccess.nonOffsetAccessible
+        # Defensive branches after extension/runtime narrowing (Redis info, filters, etc.).
+        -
+            identifier: function.alreadyNarrowedType
+        -
+            identifier: identical.alwaysFalse
+        -
+            identifier: notIdentical.alwaysTrue
+        -
+            identifier: function.impossibleType
+        -
+            identifier: booleanAnd.alwaysFalse
+        -
+            identifier: instanceof.alwaysTrue
+        -
+            identifier: nullCoalesce.offset
+        # Dynamic class names, string|false I/O, list|false from preg_split, callable vs Closure|string.
+        -
+            identifier: argument.type
+            message: '~expects class-string, string given~'
+        -
+            identifier: argument.type
+            message: '~expects string, string\|false given~'
+        -
+            identifier: argument.type
+            message: '~expects string, class-string\|false given~'
+        -
+            identifier: argument.type
+            message: '~expects array\|Countable, list<.*>\|false given~'
+        -
+            identifier: argument.type
+            message: '~expects list<.*>, list<.*>\|false given~'
+        -
+            identifier: argument.type
+            message: '~ReflectionFunction constructor expects Closure\|string, callable\(\): mixed given~'
+        -
+            identifier: argument.type
+            message: '~expects Exception\|null, Throwable given~'
+        -
+            identifier: argument.type
+            message: '~function chr expects int<0, 255>, int.* given~'
+        -
+            identifier: argument.type
+            message: '~hash_hkdf expects int<0, max>, int given~'
+
+services:
+    -
+        class: Switon\Core\PhpStan\LazyMethodsClassReflectionExtension
+        tags:
+            - phpstan.broker.methodsClassReflectionExtension
+    -
+        class: Switon\Core\PhpStan\LazyPropertyExpressionTypeResolverExtension
+        tags:
+            - phpstan.broker.expressionTypeResolverExtension
+    -
+        class: Switon\Core\PhpStan\MakerMakeMethodReturnTypeExtension
+        tags:
+            - phpstan.broker.dynamicMethodReturnTypeExtension
+    -
+        class: Switon\Core\PhpStan\AppMakeMethodReturnTypeExtension
+        tags:
+            - phpstan.broker.dynamicStaticMethodReturnTypeExtension
